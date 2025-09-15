@@ -1,36 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daftar Produk</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 text-gray-800">
-  <nav class="bg-blue-600 text-white p-4">
-    <a href="/" class="font-bold">Sidja</a>
-  </nav>
+{% extends "base.html" %}
+{% block title %}Daftar Produk{% endblock title %}
+{% block content %}
 
-  <main class="max-w-5xl mx-auto mt-8">
-    <h1 class="text-2xl font-bold mb-6">Daftar Produk</h1>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {% for p in products %}
-      <div class="bg-white rounded-lg shadow hover:shadow-lg transition">
-        <img src="{{ p.thumbnail }}" alt="{{ p.name }}" class="w-full h-48 object-cover rounded-t-lg">
-        <div class="p-4">
-          <h2 class="text-lg font-semibold">{{ p.name }}</h2>
-          <p class="text-gray-600 text-sm">{{ p.description|truncatechars:60 }}</p>
-          <p class="text-blue-600 font-bold mt-2">Rp {{ p.price }}</p>
-          <span class="text-xs text-gray-500">Kategori: {{ p.category }}</span>
-          {% if p.is_featured %}
-          <span class="ml-2 px-2 py-1 text-xs font-medium bg-yellow-200 text-yellow-800 rounded">Featured</span>
-          {% endif %}
-        </div>
-      </div>
-      {% empty %}
-      <p class="text-gray-500">Belum ada produk.</p>
-      {% endfor %}
+<h1 class="text-2xl font-bold mb-6">Daftar Produk</h1>
+<div class="mb-4">
+  <a href="{% url 'main:create_product' %}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+    + Tambah Produk
+  </a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  {% for p in products %}
+  <div class="bg-white rounded-lg shadow hover:shadow-lg transition">
+    {% if p.thumbnail %}
+    <img src="{{ p.thumbnail }}" alt="{{ p.name }}" class="w-full h-48 object-cover rounded-t-lg">
+    {% endif %}
+    <div class="p-4">
+      <h2 class="text-lg font-semibold">{{ p.name }}</h2>
+      <p class="text-gray-600 text-sm">{{ p.description|truncatechars:60 }}</p>
+      <p class="text-blue-600 font-bold mt-2">Rp {{ p.price }}</p>
+      <a href="{% url 'main:product_detail' p.id %}" class="text-blue-500 hover:underline">Detail</a>
     </div>
-  </main>
-</body>
-</html>
+  </div>
+  {% empty %}
+  <p class="text-gray-500">Belum ada produk.</p>
+  {% endfor %}
+</div>
+
+{% endblock content %}

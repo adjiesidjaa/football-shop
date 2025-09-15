@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Detail Produk{% endblock %}
+{% block content %}
+<a href="{% url 'main:product_list' %}" class="text-blue-500 hover:underline">← Kembali</a>
+<div class="bg-white p-6 rounded-lg shadow mt-4">
+  <h1 class="text-2xl font-bold">{{ product.name }}</h1>
+  {% if product.thumbnail %}
+    <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="my-4 w-full max-w-md rounded">
+  {% endif %}
+  <p class="text-gray-600">{{ product.description }}</p>
+  <p class="text-blue-600 font-bold mt-2">Rp {{ product.price }}</p>
+  <span class="text-sm text-gray-500">Kategori: {{ product.category }}</span>
+  {% if product.is_featured %}
+    <span class="ml-2 px-2 py-1 text-xs bg-yellow-200 text-yellow-800 rounded">Featured</span>
+  {% endif %}
+</div>
+{% endblock %}
