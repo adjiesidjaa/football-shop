@@ -31,7 +31,9 @@ DEBUG = True
 
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1","adjie-m-footballshop.pbp.cs.ui.ac.id"]
-
+CSRF_TRUSTED_ORIGINS = [
+    "adjie-m-footballshop.pbp.cs.ui.ac.id"
+]
 
 # Application definition
 
