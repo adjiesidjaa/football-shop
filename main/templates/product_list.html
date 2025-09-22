@@ -3,10 +3,17 @@
 {% block content %}
 
 <h1 class="text-2xl font-bold mb-6">Daftar Produk</h1>
-<div class="mb-4">
+<div class="mb-4 mx-auto space-x-4">
   <a href="{% url 'main:create_product' %}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
     + Tambah Produk
   </a>
+
+  <a href="?filter=all" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+    <button type="button">All Products</button>
+  </a>
+  <a href="?filter=my" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+    <button type="button">My Products</button>
+  </a> 
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

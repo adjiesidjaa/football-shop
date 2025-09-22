@@ -12,6 +12,11 @@
   <span class="text-sm text-gray-500">Kategori: {{ product.category }}</span>
   {% if product.is_featured %}
     <span class="ml-2 px-2 py-1 text-xs bg-yellow-200 text-yellow-800 rounded">Featured</span>
-  {% endif %}
+  {% endif %} 
+  {% if news.user %}
+    <p>Author: {{ product.user.username }}</p>
+  {% else %}
+    <p>Author: Anonymous</p>
+  {% endif %} 
 </div>
 {% endblock %}

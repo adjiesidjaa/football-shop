@@ -4,11 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Football Shop{% endblock title %}</title>
+  <title>{% block title %}Sidja{% endblock title %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+  {% if user.is_authenticated %}
   <nav class="bg-blue-600 text-white px-6 py-4 shadow">
     <div class="mx-auto flex justify-between items-center">
       <a href="{% url 'main:show_main' %}" class="text-2xl font-bold hover:text-blue-200">
@@ -18,9 +19,11 @@
         <a href="{% url 'main:show_main' %}" class="hover:underline">Home</a>
         <a href="{% url 'main:product_list' %}" class="hover:underline">Produk</a>
         <a href="{% url 'main:create_product' %}" class="hover:underline">Tambah Produk</a>
+        <a href="{% url 'main:logout' %}">Logout</a>
       </div>
     </div>
   </nav>
+  {% endif %}
 
 
   <main class="max-w-5xl mx-auto mt-8 p-4">
