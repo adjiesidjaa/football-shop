@@ -82,3 +82,63 @@ Commit & push ke GitHub supaya hasilnya tersimpan dan bisa dideploy ke PWS.
 Menurut saya, tutorial ini sudah cukup jelas dan runtut. Bagian penjelasan tentang serializers dan perbedaan JSON/XML sudah membantu memahami konsep data delivery. Akan lebih baik kalau disediakan contoh error yang umum muncul (misalnya NoReverseMatch atau ValidationError) beserta solusinya supaya mahasiswa bisa cepat troubleshooting saat praktikum.
 
 Foto postman berada di folder foto readme
+
+Jawaban pertanyaan Tugas 4
+
+1. Apa itu Django AuthenticationForm? Jelaskan juga kelebihan dan kekurangannya.
+AuthenticationForm adalah form bawaan Django untuk proses login. Form ini memvalidasi pasangan username–password terhadap backend autentikasi Django.
+Kelebihan
+-Siap pakai & aman: sudah menangani validasi kredensial, user aktif/nonaktif, dan error message standar.
+-Terintegrasi ekosistem Django: cocok dengan authenticate(), login(), session, middleware, dan messages.
+-Error message i18n: pesan error terjemahan tersedia.
+Kekurangan
+-Terbatas field: out-of-the-box hanya username & password (tanpa remember-me, 2FA, dsb).
+-Styling minimal: butuh dibalut template/CSS sendiri agar tampil modern.
+-Kustom validasi ekstra: untuk aturan khusus (mis. rate-limit per IP) perlu subclass/override.
+
+2.  Apa perbedaan antara autentikasi dan otorisasi? Bagaiamana Django mengimplementasikan kedua konsep tersebut?
+Autentikasi adalah verifikasi siapa pengguna (login) sedangkan Otorisasi adalah verifikasi apa yang boleh dilakukan pengguna (hak akses). Autentikasi memverifikasi identitas pengguna menggunakan authenticate() dan login(). Jika berhasil, Django membuat session dan mengirim cookie sessionid ke browser. Middleware bawaan (AuthenticationMiddleware) kemudian menambahkan request.user ke setiap request sehingga aplikasi dapat mengenali pengguna yang sedang login. Otorisasi dilakukan setelah pengguna terautentikasi. Django memiliki sistem permission bawaan (add, change, delete, view) dan mendukung penambahan permission khusus. Pemeriksaan hak akses dapat dilakukan dengan user.has_perm() atau dekorator seperti @permission_required. Jika tidak memenuhi izin, pengguna akan diarahkan ke halaman login atau ditolak (403 Forbidden).
+
+3. Apa saja kelebihan dan kekurangan session dan cookies dalam konteks menyimpan state di aplikasi web?
+Kelebihan :
+- lebih aman
+- ukuran bebas (server side)
+- ringan di server
+- mudah diakses di klien
+Kekurangan : 
+- beban server/storage
+- membutuhkan strategi shared cache/db untuk multi-server
+- batas ukuran 4kb
+- rentan XSS
+- dapat dimanipulasi di sisi klien
+
+4. Apakah penggunaan cookies aman secara default dalam pengembangan web, atau apakah ada risiko potensial yang harus diwaspadai? Bagaimana Django menangani hal tersebut?
+Penggunaan cookies tidak otomatis aman. Kita tetap memiliki risiko, seperti :
+Risiko umum:
+-XSS: script berbahaya bisa mencuri cookie jika bukan HttpOnly.
+-CSRF: request sah tampak datang dari browser user.
+-Session hijacking/fixation: pencurian/penyematan sessionid.
+-Transport sniffing: tanpa HTTPS, cookie bisa disadap.
+Cara untuk django menangani hal tersebut: 
+-SESSION_COOKIE_HTTPONLY = True (default) berarti cookie session tidak bisa diakses JS.
+-SESSION_COOKIE_SECURE = True di production berarti cookie hanya lewat HTTPS.
+-PASSWORD_HASHERS (PBKDF2) berarti password tidak disimpan plaintext.
+-Session server-side (default DB) berarti klien hanya memegang sessionid.
+
+5. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial).
+
+Membuat User Registration dengan menambahkan fungsi register di views.py menggunakan UserCreationForm, membuat file register.html, dan menambahkan routing di urls.py.
+
+Membuat User Login dengan fungsi login_user yang menggunakan AuthenticationForm, serta menambahkan mekanisme session dan cookie last_login. Membuat template login.html yang rapi dan terpusat.
+
+Membuat User Logout dengan fungsi logout_user yang menghapus session dan cookie, lalu mengarahkan kembali ke halaman login.
+
+Menambahkan @login_required pada view show_main dan halaman lain yang butuh autentikasi, sehingga hanya pengguna yang sudah login yang bisa mengaksesnya.
+
+Menghubungkan model Product dengan User dengan menambahkan field user = models.ForeignKey(User, ...) pada model. Mengubah create_product supaya produk yang dibuat otomatis terkait dengan request.user.
+
+Menampilkan detail user yang sedang login di halaman utama (username dan waktu last_login dari cookie).
+
+Membuat dua akun pengguna dan mengisi masing-masing tiga dummy data produk menggunakan halaman create product setelah login.
+
+Melakukan add, commit, dan push ke GitHub dan PWS supaya perubahan tersimpan dan aplikasi dapat diakses secara online.
