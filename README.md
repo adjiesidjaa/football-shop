@@ -142,3 +142,69 @@ Menampilkan detail user yang sedang login di halaman utama (username dan waktu l
 Membuat dua akun pengguna dan mengisi masing-masing tiga dummy data produk menggunakan halaman create product setelah login.
 
 Melakukan add, commit, dan push ke GitHub dan PWS supaya perubahan tersimpan dan aplikasi dapat diakses secara online.
+
+Jawaban pertanyaan Tugas 5
+1) Urutan prioritas (specificity) jika ada banyak CSS selector yang menarget elemen yang sama
+Urutan:
+- !important pada deklarasi (hindari kecuali darurat).
+- Inline style pada elemen (contoh: <div style="color:red">).
+- Selector ID (#header, specificity ~ 0,1,0,0).
+- Class / Attribute / Pseudo-class (.btn, [type="text"], :hover, specificity ~ 0,0,1,0).
+- Element / Pseudo-element (h1, p, ::before, specificity ~ 0,0,0,1).
+- Jika masih seri maka aturan paling bawah di file (deklarasi terakhir) yang menang
+
+2) Kenapa responsive design penting? + contoh yang sudah & belum responsif
+- Multi-device: layar HP, tablet, sampai desktop punya ukuran dan rasio beda.
+- UX & aksesibilitas: navigasi tetap nyaman tanpa zoom/pinch.
+- SEO & performa: Google mengutamakan mobile-friendly; layout adaptif biasanya lebih ringan.
+- Maintainability: satu basis kode melayani banyak perangkat (ketimbang subdomain m-dot).
+
+Contoh yang sudah responsif (umum):
+GitHub / Wikipedia / Gmail (web), navigasi, grid, dan tipografi menyesuaikan lebar layar; sidebar berubah jadi menu.
+
+Contoh yang belum responsif :
+Dashboard legacy / aplikasi internal lama , tabel melebar keluar layar di HP, navbar pecah, butuh scroll horizontal.
+Pada proyek ini, navbar dan halaman produk sudah dibuat responsif (grid kolom menyesuaikan breakpoint; navbar berubah ke hamburger fullscreen di mobile).
+
+3) Perbedaan margin, border, dan padding + cara implementasi
+- Margin: ruang di luar border; “jarak” antar elemen.
+- Border: garis tepi yang “mengelilingi” konten + padding.
+- Padding: ruang di dalam border; jarak teks/konten ke tepi box.
+
+Contoh cara menerapkannya menggunakan css
+.card {
+  margin: 16px;               /* jarak antar kartu */
+  border: 1px solid #e5e7eb;  /* garis tepi */
+  padding: 12px;              /* ruang dalam kartu */
+  border-radius: 8px;
+}
+
+4) Konsep Flexbox & Grid + kegunaannya
+Flexbox (1D layout) :
+- Fokus ke satu dimensi (baris atau kolom).
+- Cocok untuk: navbar dengan item rata tengah & kanan, komponen kartu dengan tombol sejajar.
+Grid (2D layout):
+- Fokus ke dua dimensi (baris dan kolom).
+- Cocok untuk: katalog produk, dashboard dengan sidebar + konten, layout majalah.
+
+5. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial).
+
+Membuat kerangka base.html sebagai layout utama, mengimpor CDN Tailwind, dan memastikan blok {% block content %} dipakai ulang di semua halaman.
+
+Menata navbar agar menu Home/Produk/Tambah Produk berada di tengah dan area kanan menampilkan username + NPM/Kelas + Logout, tanpa mengubah warna/branding “Sidja”.
+
+Menambahkan hamburger menu untuk mobile yang membuka fullscreen overlay navigasi; tombol × untuk menutup, serta menyembunyikan menu desktop pada breakpoint kecil.
+
+Menambahkan context processor kustom agar student_npm dan student_class tersedia otomatis di semua template tanpa harus mengirim context satu-satu dari setiap view.
+
+Membuat grid katalog produk yang responsif (kolom adaptif di sm/lg/xl), kartu produk dengan gambar, nama ter-truncate, harga, tombol Detail, serta tombol Edit/Delete yang hanya muncul untuk pemiliknya.
+
+Menyusun ProductForm berbasis ModelForm dan memastikan field category memakai choices bertema toko football serta field is_featured tampil di form.
+
+Membangun halaman Create Product dan Edit Product yang modern: label kecil, input rounded, fokus dengan ring, select kategori, checkbox featured, dan tombol aksi yang konsisten.
+
+Menyempurnakan halaman Detail Product untuk menampilkan {{ product.get_category_display }}, badge “Featured” bila aktif, gambar (bila ada), dan author dengan fallback ke “Anonymous” bila tidak tersedia.
+
+Mengamankan seluruh operasi dengan @login_required serta pembatasan kepemilikan (query pakai user=request.user), merapikan penamaan URL (main:...), dan memastikan view Delete selalu mengembalikan HttpResponseRedirect.
+
+Menguji di lokal pada berbagai ukuran layar, memperbaiki error umum (mis. NoReverseMatch, TemplateDoesNotExist, dan return view), lalu commit & push ke GitHub serta deploy ke PWS, diakhiri pembaruan README.md.

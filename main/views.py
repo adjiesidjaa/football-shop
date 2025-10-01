@@ -20,6 +20,7 @@ def show_main(request):
         "app_name": "Sidja",
         "student_name": "Adjie M. Usman",
         "student_class": "PBP C",
+        "student_npm": "2406423313",
         "last_login": request.COOKIES.get('last_login', 'Never')
     }
     return render(request, "main.html", context)
@@ -114,5 +115,26 @@ def login_user(request):
 def logout_user(request):
     logout(request)
     return redirect('main:login')
+
+@login_required(login_url='/login')
+def edit_product(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            return redirect("main:product_list")
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, "edit_product.html", {"form": form, "product": product})
+
+
+@login_required(login_url='/login')
+def delete_product(request, product_id):
+    product = get_object_or_404(Product, pk=product_id, user=request.user)
+    product.delete()
+    return HttpResponseRedirect(reverse("main:product_list"))
 
 

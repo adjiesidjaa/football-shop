@@ -10,25 +10,73 @@
 <body class="bg-gray-100 text-gray-800">
 
   {% if user.is_authenticated %}
-  <nav class="bg-blue-600 text-white px-6 py-4 shadow">
-    <div class="mx-auto flex justify-between items-center">
+  <nav class="bg-blue-600 text-white px-6 py-4 shadow relative">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      
+      <!-- Logo -->
       <a href="{% url 'main:show_main' %}" class="text-2xl font-bold hover:text-blue-200">
         Sidja
       </a>
-      <div class="space-x-4">
+
+      <!-- Menu (center - desktop) -->
+      <div class="hidden md:flex space-x-6 mx-auto">
         <a href="{% url 'main:show_main' %}" class="hover:underline">Home</a>
         <a href="{% url 'main:product_list' %}" class="hover:underline">Produk</a>
         <a href="{% url 'main:create_product' %}" class="hover:underline">Tambah Produk</a>
-        <a href="{% url 'main:logout' %}">Logout</a>
       </div>
+
+      <!-- User info + Logout (desktop only) -->
+      <div class="hidden md:flex items-center space-x-3 text-right">
+        <div>
+          <p class="font-medium">{{ user.username }}</p>
+          <p class="text-xs text-gray-200">{{ student_npm }} - {{ student_class }}</p>
+        </div>
+        <a href="{% url 'main:logout' %}" class="text-red-300 hover:text-red-500 font-semibold">Logout</a>
+      </div>
+
+      <!-- Hamburger button (mobile only) -->
+      <button id="menu-btn" class="md:hidden text-white focus:outline-none">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Fullscreen Mobile Menu -->
+    <div id="mobile-menu" class="fixed inset-0 bg-blue-700 bg-opacity-95 hidden flex-col items-center justify-center space-y-6 z-50">
+      <a href="{% url 'main:show_main' %}" class="text-2xl hover:underline">Home</a>
+      <a href="{% url 'main:product_list' %}" class="text-2xl hover:underline">Produk</a>
+      <a href="{% url 'main:create_product' %}" class="text-2xl hover:underline">Tambah Produk</a>
+      <hr class="w-2/3 border-gray-400">
+      <div class="text-center space-y-1">
+        <p class="font-semibold text-xl">{{ user.username }}</p>
+        <p class="text-gray-200">{{ student_npm }} - {{ student_class }}</p>
+      </div>
+      <a href="{% url 'main:logout' %}" class="text-red-300 hover:text-red-500 text-xl">Logout</a>
+      <button id="close-menu" class="absolute top-4 right-6 text-white text-4xl">&times;</button>
     </div>
   </nav>
   {% endif %}
-
 
   <main class="max-w-5xl mx-auto mt-8 p-4">
     {% block content %}{% endblock content %}
   </main>
 
+  <script>
+    const btn = document.getElementById("menu-btn");
+    const menu = document.getElementById("mobile-menu");
+    const closeBtn = document.getElementById("close-menu");
+
+    btn.addEventListener("click", () => {
+      menu.classList.remove("hidden");
+      menu.classList.add("flex");
+    });
+
+    closeBtn.addEventListener("click", () => {
+      menu.classList.add("hidden");
+      menu.classList.remove("flex");
+    });
+  </script>
 </body>
 </html>

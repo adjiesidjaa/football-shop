@@ -3,7 +3,7 @@ from main.views import show_main
 from .views import (
     product_list, create_product, product_detail,
     product_xml, product_json, product_xml_by_id, product_json_by_id,
-    register, login_user, logout_user,
+    register, login_user, logout_user, edit_product, delete_product
 )
 
 app_name = 'main'
@@ -16,6 +16,8 @@ urlpatterns = [
     path('register/', register, name='register'),
     path('login/', login_user, name='login'),
     path('logout/', logout_user, name='logout'),
+    path('news/<int:product_id>/edit', edit_product, name='edit_product'),
+    path('products/<int:product_id>/delete/', delete_product, name='delete_product'),
 
     path("xml/", product_xml, name="product_xml"),
     path("json/", product_json, name="product_json"),
