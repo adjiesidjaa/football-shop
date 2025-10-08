@@ -1,59 +1,363 @@
 {% extends "base.html" %}
-{% block title %}Daftar Produk{% endblock title %}
+{% load static %}
+{% block title %}Produk{% endblock %}
+
 {% block content %}
-
-<h1 class="text-2xl font-bold mb-6 text-center md:text-left">Daftar Produk</h1>
-
-<!-- Tombol filter -->
-<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-  <div class="flex flex-wrap gap-3">
-    <a href="{% url 'main:create_product' %}" 
-       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 text-sm sm:text-base">
-      + Tambah Produk
-    </a>
-
-    <a href="?filter=all" 
-       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 text-sm sm:text-base">
-      All Products
-    </a>
-
-    <a href="?filter=my" 
-       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 text-sm sm:text-base">
-      My Products
-    </a>
-  </div>
-</div>
-
-<!-- Grid produk -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-  {% for p in products %}
-  <div class="bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
-    {% if p.thumbnail %}
-    <img src="{{ p.thumbnail }}" alt="{{ p.name }}" class="w-full h-40 sm:h-48 object-cover rounded-t-lg">
-    {% endif %}
-    <div class="p-4 flex flex-col flex-grow">
-      <h2 class="text-lg font-semibold truncate">{{ p.name }}</h2>
-      <p class="text-gray-600 text-sm flex-grow">{{ p.description|truncatechars:60 }}</p>
-      <p class="text-blue-600 font-bold mt-2">Rp {{ p.price }}</p>
-
-      <div class="mt-3 flex items-center justify-between">
-        <a href="{% url 'main:product_detail' p.id %}" 
-           class="text-blue-500 hover:underline text-sm sm:text-base">Detail</a>
-
-        {% if user.is_authenticated and p.user == user %}
-        <div class="flex gap-2">
-          <a href="{% url 'main:edit_product' p.id %}"
-             class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs sm:text-sm">Edit</a>
-          <a href="{% url 'main:delete_product' p.id %}"
-             class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs sm:text-sm">Delete</a>
-        </div>
-        {% endif %}
-      </div>
+<div class="mx-auto max-w-5xl mt-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Daftar Produk</h1>
+    <div class="flex gap-2">
+      <select id="filterSelect" class="border rounded px-3 py-2 bg-white">
+        <option value="all" {% if filter_type == "all" %}selected{% endif %}>Semua</option>
+        <option value="mine" {% if filter_type != "all" %}selected{% endif %}>Milik Saya</option>
+      </select>
+      <button id="refreshBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Refresh</button>
+      <button id="createBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Tambah</button>
     </div>
   </div>
-  {% empty %}
-  <p class="text-gray-500 col-span-full text-center">Belum ada produk.</p>
-  {% endfor %}
+
+  <!-- States -->
+  <div id="state-loading" class="hidden text-sm text-gray-600">Loading data…</div>
+  <div id="state-error" class="hidden text-sm text-red-600">Terjadi error saat memuat data.</div>
+  <div id="state-empty" class="hidden text-sm text-gray-500">Belum ada produk.</div>
+
+  <!-- Product list -->
+  <div id="productList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 </div>
 
-{% endblock content %}
+<!-- Modal: Create/Update -->
+<div id="formModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-40">
+  <div class="bg-white w-[95%] max-w-lg rounded-xl p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="formModalTitle" class="text-xl font-semibold text-gray-800">Create Product</h2>
+      <button id="closeFormModal" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    <form id="productForm" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm mb-1" for="name">Nama</label>
+        <input id="name" name="name" class="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm mb-1" for="description">Deskripsi</label>
+        <textarea id="description" name="description" class="w-full border rounded px-3 py-2" rows="3"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm mb-1" for="price">Harga</label>
+        <input id="price" name="price" type="number" class="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm mb-1" for="category">Kategori</label>
+        <select id="category" name="category" class="w-full border rounded px-3 py-2" required>
+          <option value="JER">Jersey</option>
+          <option value="SEP">Sepatu Bola</option>
+          <option value="BOL">Bola</option>
+          <option value="LAT">Peralatan Latihan</option>
+          <option value="AKS">Aksesoris</option>
+          <option value="MER">Merchandise Klub</option>
+          <option value="OTH">Lainnya</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1" for="thumbnail">Thumbnail (URL)</label>
+        <input id="thumbnail" name="thumbnail" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="is_featured" name="is_featured" type="checkbox" class="h-4 w-4"/>
+        <label for="is_featured" class="text-sm">Featured</label>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm mb-1" for="stock">Stok</label>
+          <input id="stock" name="stock" type="number" class="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1" for="brand">Brand</label>
+          <input id="brand" name="brand" class="w-full border rounded px-3 py-2" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="cancelForm" class="px-4 py-2 border rounded">Batal</button>
+        <button id="submitForm" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Confirm Delete -->
+<div id="confirmModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-40">
+  <div class="bg-white w-[95%] max-w-md rounded-xl p-6">
+    <h3 class="text-lg font-semibold text-gray-800">Hapus Produk</h3>
+    <p class="text-sm text-gray-600 mt-2">Yakin ingin menghapus produk ini?</p>
+    <div class="flex justify-end gap-2 mt-6">
+      <button id="cancelDelete" class="px-4 py-2 border rounded">Batal</button>
+      <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastStack" class="fixed top-4 right-4 z-50 space-y-2"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // === CSRF helper ===
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  // username user yang sedang login (diambil dari context Django)
+  const currentUser = "{{ request.user.username|escapejs }}";
+
+  const csrftoken = getCookie('csrftoken');
+
+  // === DOM refs ===
+  const listEl = document.getElementById('productList');
+  const loadingEl = document.getElementById('state-loading');
+  const emptyEl = document.getElementById('state-empty');
+  const errorEl = document.getElementById('state-error');
+  const filterSelect = document.getElementById('filterSelect');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const createBtn = document.getElementById('createBtn');
+
+  // Form modal refs
+  const formModal = document.getElementById('formModal');
+  const formTitle = document.getElementById('formModalTitle');
+  const closeFormModal = document.getElementById('closeFormModal');
+  const productForm = document.getElementById('productForm');
+  const cancelForm = document.getElementById('cancelForm');
+  const submitForm = document.getElementById('submitForm');
+
+  // Confirm modal refs
+  const confirmModal = document.getElementById('confirmModal');
+  const cancelDelete = document.getElementById('cancelDelete');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  // Toast
+  const toastStack = document.getElementById('toastStack');
+  function toast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className = `px-4 py-3 rounded shadow text-white ${type==='success'?'bg-green-600': type==='error'?'bg-red-600':'bg-blue-600'}`;
+    t.textContent = msg;
+    toastStack.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  // State helpers
+  function setState({loading=false, error=false, empty=false}) {
+    loadingEl.classList.toggle('hidden', !loading);
+    errorEl.classList.toggle('hidden', !error);
+    emptyEl.classList.toggle('hidden', !empty);
+  }
+
+  // Render item card (+ data-* untuk edit)
+  function renderCard(p) {
+    const isOwner = (p.author === currentUser); // hanya pemilik yg boleh edit/delete
+    const div = document.createElement('div');
+    div.className = "bg-white rounded-lg shadow p-4 flex flex-col";
+    div.innerHTML = `
+      <div class="flex-1">
+        <div class="flex items-start justify-between">
+          <h3 class="text-lg font-semibold text-gray-800">${p.name}</h3>
+          ${p.is_featured ? '<span class="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded">Featured</span>' : ''}
+        </div>
+        ${p.thumbnail ? `<img src="${p.thumbnail}" class="w-full h-40 object-contain my-3 rounded" />` : ''}
+        <p class="text-sm text-gray-600 line-clamp-3">${p.description || ''}</p>
+        <p class="mt-2 font-bold text-blue-600">Rp ${p.price}</p>
+        <p class="text-xs text-gray-500">Kategori: ${p.category || '-'}</p>
+        <p class="text-[11px] text-gray-400 mt-1">Author: ${p.author || '-'}</p>
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <a href="/${p.id}/" class="px-3 py-2 border rounded">Detail</a>
+        ${
+          isOwner
+            ? `
+              <button
+                class="editBtn px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                data-id="${p.id}"
+                data-name="${p.name ?? ''}"
+                data-description="${(p.description ?? '').replace(/"/g, '&quot;')}"
+                data-price="${p.price ?? ''}"
+                data-thumbnail="${p.thumbnail ?? ''}"
+                data-featured="${p.is_featured ? 'true' : 'false'}"
+                data-stock="${p.stock ?? ''}"
+                data-brand="${p.brand ?? ''}"
+              >Edit</button>
+              <button data-id="${p.id}" class="deleteBtn px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+            `
+            : ''
+        }
+      </div>
+    `;
+    return div;
+  }
+
+
+  let currentEditingId = null;
+  let pendingDeleteId = null;
+
+  function openFormModal(mode='create', data=null) {
+    formTitle.textContent = mode === 'create' ? 'Tambah Produk' : 'Edit Produk';
+    currentEditingId = mode === 'create' ? null : data.id;
+
+    // isi form
+    productForm.name.value = data?.name ?? '';
+    productForm.description.value = data?.description ?? '';
+    productForm.price.value = data?.price ?? '';
+    // set category hanya jika ada raw (backend belum mengirim category_raw — jadi biarkan saja)
+    if (data?.category_raw) productForm.category.value = data.category_raw;
+    productForm.thumbnail.value = data?.thumbnail ?? '';
+    productForm.is_featured.checked = !!data?.is_featured;
+    productForm.stock.value = data?.stock ?? '';
+    productForm.brand.value = data?.brand ?? '';
+
+    formModal.classList.remove('hidden');
+    formModal.classList.add('flex');
+  }
+  function closeForm() {
+    formModal.classList.add('hidden');
+    formModal.classList.remove('flex');
+  }
+
+  function openConfirm(id) {
+    pendingDeleteId = id;
+    confirmModal.classList.remove('hidden');
+    confirmModal.classList.add('flex');
+  }
+  function closeConfirm() {
+    confirmModal.classList.add('hidden');
+    confirmModal.classList.remove('flex');
+  }
+
+  // Ambil list (pakai bust cache + param agar terbaru)
+  async function fetchList(showToast = false) {
+    setState({loading:true});
+    listEl.innerHTML = '';
+    try {
+      const f = filterSelect.value === 'mine' ? 'mine' : 'all';
+      const res = await fetch(`/api/products/?filter=${f}&_=${Date.now()}`, {
+        headers: {'X-CSRFToken': csrftoken},
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error('not ok');
+      if (data.count === 0) {
+        setState({empty:true});
+        return;
+      }
+      setState({});
+      data.items.forEach(p => listEl.appendChild(renderCard(p)));
+
+      if (showToast) toast("Produk berhasil di-refresh", "success");
+    } catch (e) {
+      console.error(e);
+      setState({error:true});
+      if (showToast) toast("Gagal memuat produk", "error");
+    }
+  }
+
+  // === Events ===
+
+  // Refresh dengan toast
+  refreshBtn.addEventListener('click', () => fetchList(true));
+
+  // First load tanpa toast
+  fetchList();
+
+  // Ganti filter → reload list (tanpa toast)
+  filterSelect.addEventListener('change', () => fetchList());
+
+  // Buka modal create
+  createBtn.addEventListener('click', () => openFormModal('create'));
+
+  // Tutup modal form
+  closeFormModal.addEventListener('click', closeForm);
+  cancelForm.addEventListener('click', closeForm);
+
+  // Event delegation untuk Edit & Delete (agar tidak hilang setelah re-render)
+  listEl.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.editBtn');
+    if (editBtn) {
+      openFormModal('edit', {
+        id: editBtn.dataset.id,
+        name: editBtn.dataset.name,
+        description: editBtn.dataset.description,
+        price: editBtn.dataset.price,
+        thumbnail: editBtn.dataset.thumbnail,
+        is_featured: editBtn.dataset.featured === 'true',
+        stock: editBtn.dataset.stock,
+        brand: editBtn.dataset.brand,
+        // category_raw: tambahkan jika backend sudah kirim raw code (JER/SEP/...)
+      });
+      return;
+    }
+    const delBtn = e.target.closest('.deleteBtn');
+    if (delBtn) {
+      openConfirm(delBtn.dataset.id);
+    }
+  });
+
+  // Submit form create/update
+  productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(productForm);
+    const url = currentEditingId ? `/api/products/${currentEditingId}/update/` : `/api/products/create/`;
+    submitForm.disabled = true;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        let msg = "Gagal menyimpan.";
+        if (data.errors) {
+          msg += " " + Object.entries(data.errors).map(([k,v]) => `${k}: ${v.join ? v.join(', ') : v}`).join(' | ');
+        }
+        toast(msg, 'error');
+        return;
+      }
+      toast(currentEditingId ? "Produk berhasil diupdate" : "Produk berhasil dibuat", 'success');
+      closeForm();
+      await fetchList(); // refresh tanpa toast
+    } catch (err) {
+      console.error(err);
+      toast("Terjadi kesalahan jaringan", 'error');
+    } finally {
+      submitForm.disabled = false;
+    }
+  });
+
+  // Tutup modal konfirmasi
+  cancelDelete.addEventListener('click', closeConfirm);
+
+  // Konfirmasi hapus
+  confirmDeleteBtn.addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    confirmDeleteBtn.disabled = true;
+    try {
+      const res = await fetch(`/api/products/${pendingDeleteId}/delete/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrftoken}
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast("Gagal menghapus produk", 'error');
+        return;
+      }
+      toast("Produk terhapus", 'success');
+      closeConfirm();
+      await fetchList(); // refresh tanpa toast
+    } catch (e) {
+      console.error(e);
+      toast("Terjadi kesalahan jaringan", 'error');
+    } finally {
+      confirmDeleteBtn.disabled = false;
+    }
+  });
+</script>
+{% endblock %}

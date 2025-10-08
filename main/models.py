@@ -29,3 +29,8 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
+    
+class Car(models.Model):
+    name = models.CharField(max_length=50)
+    brand = models.CharField(max_length=50)
+    stock = models.IntegerField()

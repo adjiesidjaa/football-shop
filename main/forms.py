@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Product
+from .models import Product,Car
 
 class ProductForm(ModelForm):
     class Meta:
@@ -27,3 +27,8 @@ class ProductForm(ModelForm):
                 "class": "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             }),
         }
+
+class CarForm(ModelForm):
+    class Meta:
+        model = Car
+        fields = ["name","brand","stock"]

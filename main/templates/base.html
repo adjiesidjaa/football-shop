@@ -12,7 +12,6 @@
   {% if user.is_authenticated %}
   <nav class="bg-blue-600 text-white px-6 py-4 shadow relative">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
-      
       <!-- Logo -->
       <a href="{% url 'main:show_main' %}" class="text-2xl font-bold hover:text-blue-200">
         Sidja
@@ -64,19 +63,94 @@
   </main>
 
   <script>
+  // Semuanya dibungkus supaya aman di halaman mana pun
+  document.addEventListener('DOMContentLoaded', () => {
+    // ===== util =====
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+    }
+    function ensureToastStack() {
+      let stack = document.getElementById('toastStack') || document.getElementById('toastStackAuth');
+      if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'toastStack';
+        stack.className = 'fixed top-4 right-4 z-50 space-y-2';
+        document.body.appendChild(stack);
+      }
+      return stack;
+    }
+    function toast(msg, type='info') {
+      const stack = ensureToastStack();
+      const t = document.createElement('div');
+      t.className = `px-4 py-3 rounded shadow text-white ${type==='success'?'bg-green-600': type==='error'?'bg-red-600':'bg-blue-600'}`;
+      t.textContent = msg;
+      stack.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
+    }
+    function saveToast(msg, type='info') {
+      sessionStorage.setItem('toast', JSON.stringify({ msg, type }));
+    }
+
+    // tampilkan toast yang disimpan (mis. setelah logout redirect)
+    const saved = sessionStorage.getItem('toast');
+    if (saved) {
+      const { msg, type } = JSON.parse(saved);
+      toast(msg, type);
+      sessionStorage.removeItem('toast');
+    }
+
+    // ===== mobile menu (aman walau elemen tidak ada) =====
     const btn = document.getElementById("menu-btn");
     const menu = document.getElementById("mobile-menu");
     const closeBtn = document.getElementById("close-menu");
 
-    btn.addEventListener("click", () => {
-      menu.classList.remove("hidden");
-      menu.classList.add("flex");
-    });
+    if (btn && menu) {
+      btn.addEventListener("click", () => {
+        menu.classList.remove("hidden");
+        menu.classList.add("flex");
+      });
+    }
+    if (closeBtn && menu) {
+      closeBtn.addEventListener("click", () => {
+        menu.classList.add("hidden");
+        menu.classList.remove("flex");
+      });
+    }
 
-    closeBtn.addEventListener("click", () => {
-      menu.classList.add("hidden");
-      menu.classList.remove("flex");
-    });
+    // ===== intercept logout → simpan toast → call API (non-blocking) → redirect =====
+    (function wireLogoutWithToast() {
+      const csrf = getCookie('csrftoken') || '';
+      const logoutHref = "{% url 'main:logout' %}";
+      const apiLogout = "{% url 'main:api_logout' %}";
+
+      // tangkap semua link menuju logout (desktop & mobile)
+      const links = document.querySelectorAll(`a[href="${logoutHref}"]`);
+      links.forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          // 1) simpan toast dulu supaya dijamin tampil setelah pindah halaman
+          saveToast('Logout sukses', 'success');
+
+          // 2) coba panggil API logout (fire-and-forget)
+          try {
+            fetch(apiLogout, {
+              method: 'POST',
+              headers: { 'X-CSRFToken': csrf },
+              credentials: 'same-origin',
+              keepalive: true, // tetap kirim walau langsung redirect
+            }).catch(() => {});
+          } catch (_) {}
+
+          // 3) redirect ke halaman login
+          window.location.href = "{% url 'main:login' %}";
+        });
+      });
+    })();
+  });
   </script>
+
+  {% block extra_scripts %}{% endblock extra_scripts %}
 </body>
 </html>

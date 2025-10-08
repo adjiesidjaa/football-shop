@@ -5,28 +5,94 @@
 {% endblock meta %}
 
 {% block content %}
+<div class="w-full max-w-3xl mx-auto mt-8">
+  <h1 class="text-2xl font-bold mb-4 text-gray-800">Register</h1>
 
-<div>
-  <h1 class="text-2xl font-bold mb-4">Register</h1>
-
-  <form method="POST">
+  <form method="POST" id="register-form">
     {% csrf_token %}
-    <table>
+    <table class="w-full text-left">
       {{ form.as_table }}
       <tr>
         <td></td>
-        <td><input class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" type="submit" name="submit" value="Daftar" /></td>
+        <td class="pt-3">
+          <input
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition cursor-pointer"
+            type="submit" name="submit" value="Daftar" />
+        </td>
       </tr>
     </table>
   </form>
 
   {% if messages %}
-  <ul>
+  <ul class="mt-4 space-y-1">
     {% for message in messages %}
-    <li>{{ message }}</li>
+      <li class="text-sm text-gray-700">{{ message }}</li>
     {% endfor %}
   </ul>
   {% endif %}
 </div>
-
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+  // Ambil CSRF dari cookie
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // Toast sederhana
+  const toastStack = document.createElement('div');
+  toastStack.id = 'toastStackAuth';
+  toastStack.className = 'fixed top-4 right-4 z-50 space-y-2';
+  document.body.appendChild(toastStack);
+
+  function toast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className =
+      'px-4 py-3 rounded shadow text-white text-sm ' +
+      (type==='success' ? 'bg-green-600' : type==='error' ? 'bg-red-600' : 'bg-blue-600');
+    t.textContent = msg;
+    toastStack.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  // AJAX Register
+  const form = document.getElementById('register-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+
+    try {
+      const res = await fetch("{% url 'main:api_register' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken },
+        body: fd
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        let msg = data.msg || "Registrasi gagal";
+        if (data.errors) {
+          // gabungkan pesan error field
+          const fieldMsgs = Object.entries(data.errors)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+            .join(' | ');
+          if (fieldMsgs) msg += " — " + fieldMsgs;
+        }
+        toast(msg, 'error');
+        return;
+      }
+
+      toast("Registrasi berhasil", 'success');
+      // Arahkan ke halaman login
+      window.location.href = "{% url 'main:login' %}";
+    } catch (err) {
+      console.error(err);
+      toast("Terjadi kesalahan jaringan", 'error');
+    }
+  });
+</script>
+{% endblock %}

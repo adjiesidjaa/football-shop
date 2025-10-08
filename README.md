@@ -208,3 +208,33 @@ Menyempurnakan halaman Detail Product untuk menampilkan {{ product.get_category_
 Mengamankan seluruh operasi dengan @login_required serta pembatasan kepemilikan (query pakai user=request.user), merapikan penamaan URL (main:...), dan memastikan view Delete selalu mengembalikan HttpResponseRedirect.
 
 Menguji di lokal pada berbagai ukuran layar, memperbaiki error umum (mis. NoReverseMatch, TemplateDoesNotExist, dan return view), lalu commit & push ke GitHub serta deploy ke PWS, diakhiri pembaruan README.md.
+
+## Tugas 6
+
+### 1. Perbedaan synchronous vs asynchronous request
+- Synchronous: browser menunggu respons server; halaman umumnya reload/berhenti sementara.
+- Asynchronous (AJAX): request berjalan di background; halaman tidak reload, hanya bagian tertentu yang di-update.
+
+### 2. Alur kerja AJAX di Django (request–response)
+1) Frontend menjalankan `fetch()` dengan menyertakan CSRF token.  
+2) URL mengarah ke endpoint Django (view) yang mengembalikan JSON (`JsonResponse`).  
+3) Frontend menerima JSON, lalu memperbarui DOM (mis. menambah/menghapus kartu produk) tanpa reload.
+
+### 3. Keuntungan AJAX dibanding render biasa
+- UX lebih cepat & responsif (partial update).
+- Mengurangi beban server & bandwidth (tidak render seluruh halaman).
+- Arsitektur lebih modular (view HTML untuk fallback, API JSON untuk interaksi dinamis).
+
+### 4. Keamanan AJAX untuk Login & Register
+- CSRF token wajib pada setiap request POST/DELETE.
+- Batasi akses dengan @login_required untuk endpoint sensitif.
+- Validasi form di server (Django Form/AuthenticationForm).
+- Jangan expose detail error sensitif; gunakan pesan yang aman.
+- Gunakan HTTPS di produksi.
+
+### 5. Dampak AJAX pada User Experience
+- Interaksi instan (create/update/delete muncul langsung).
+- Feedback jelas (loading, error, empty state, toast).
+- Minim interupsi (tidak ada full page reload), sehingga alur pengguna mulus.
+
+
